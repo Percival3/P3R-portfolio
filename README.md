@@ -4,6 +4,12 @@
 
 P3R-inspired multilingual personal website template for portfolios, blogs, research notes, and stylized personal landing pages.
 
+## Preview
+
+- 在线示例 / Live Demo: [percival-cogito.netlify.app](https://percival-cogito.netlify.app)
+
+![P3R portfolio template preview](./sample1.png)
+
 ## 这是什么
 
 - 一个可直接部署到 Netlify 的静态网站模板
