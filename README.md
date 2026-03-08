@@ -1,4 +1,4 @@
-# Curved Chaos
+# P3R portfolio
 
 一个受 P3R UI 气质启发的多语言个人主页模板，基于 Astro v5、React 19、Tailwind CSS v4 构建，适合用来搭建作品集、博客、研究记录或带强视觉风格的个人站。
 
