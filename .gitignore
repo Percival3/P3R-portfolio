@@ -30,5 +30,13 @@ Thumbs.db
 
 # editor and local tool settings
 .idea/
+.vscode/launch.json
 .vscode/settings.json
+.claude/
+skills/
+AGENTS.md
 .claude/settings.local.json
+
+# local publish scratch dirs
+publish-clean-*/
+publish-sync-*/
