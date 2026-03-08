@@ -1,0 +1,440 @@
+---
+import P3RLayout from '../../../layouts/P3RLayout.astro';
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import {
+  Mail,
+  MapPin,
+  GraduationCap,
+  ArrowUpRight,
+  Calendar,
+  BookOpen,
+  Database,
+} from 'lucide-react';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'zh' } },
+    { params: { lang: 'en' } },
+    { params: { lang: 'ja' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+const allPosts = (await getCollection('posts'))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const latestPosts = allPosts.slice(0, 3);
+
+const allResearch = (await getCollection('research'))
+  .filter((item) => !item.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const latestResearch = allResearch.slice(0, 3);
+
+const allCreatives = (await getCollection('creatives'))
+  .filter((item) => !item.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const latestCreatives = allCreatives.slice(0, 3);
+
+const translations = {
+  zh: {
+    pageTitle: '关于',
+    kicker: 'TEMPLATE PROFILE / REPLACEABLE CONTENT',
+    greeting: '你好，这里是',
+    name: '你的名字',
+    role: '研究者 / 创作者',
+    affiliation: '你的机构 / 工作室',
+    location: '你的城市，你的国家',
+    bio: '用这一句话概括你是谁、在做什么，以及你想长期投入的主题。',
+    noteLabel: 'Template note',
+    note:
+      '这里是模板默认文案。你可以把它替换成个人简介、研究兴趣、项目说明，或者直接删除整个区块。',
+    stats: {
+      creatives: 'Creative files',
+      posts: 'Journal entries',
+      research: 'Research records',
+    },
+    sections: {
+      recentCreatives: '最近创作',
+      recentPosts: '最新博客',
+      recentResearch: '最新研究',
+      connect: '联系方式',
+      connectDesc: '把这些入口替换成你自己的平台链接，或者按需删减。',
+      links: '模板资源',
+      linksDesc: '这些默认链接用于帮助你继续定制、记录和部署站点。',
+      viewAll: '查看全部',
+      noContent: '内容即将上线',
+    },
+    email: '发送邮件',
+    secondaryCta: 'Astro 文档',
+    secondaryLink: 'https://docs.astro.build/',
+    archiveLabel: '替换提示',
+    archiveItems: [
+      '把姓名、机构与地点换成你自己的。',
+      '把邮箱、社媒和资源链接换成你自己的。',
+      '如果某个模块不需要，直接删掉即可。',
+    ],
+    visit: '访问',
+  },
+  en: {
+    pageTitle: 'About',
+    kicker: 'TEMPLATE PROFILE / REPLACEABLE CONTENT',
+    greeting: 'Hi, this is',
+    name: 'Your Name',
+    role: 'Researcher / Creator',
+    affiliation: 'Your Studio / Institution',
+    location: 'Your City, Your Country',
+    bio: 'Use this short sentence to explain who you are, what you make, and what you care about.',
+    noteLabel: 'Template note',
+    note:
+      'This is placeholder copy for the template. Replace it with your own profile, interests, project focus, or remove the block entirely.',
+    stats: {
+      creatives: 'Creative files',
+      posts: 'Journal entries',
+      research: 'Research records',
+    },
+    sections: {
+      recentCreatives: 'Recent Creatives',
+      recentPosts: 'Latest Posts',
+      recentResearch: 'Latest Research',
+      connect: 'Contact',
+      connectDesc: 'Replace these links with your own profiles, or trim the list down to what you actually use.',
+      links: 'Starter Resources',
+      linksDesc: 'These default links help you keep customizing, documenting, and deploying the site.',
+      viewAll: 'View All',
+      noContent: 'Coming soon',
+    },
+    email: 'Send Email',
+    secondaryCta: 'Astro Docs',
+    secondaryLink: 'https://docs.astro.build/',
+    archiveLabel: 'Replace Checklist',
+    archiveItems: [
+      'Replace the name, affiliation, and location with your own.',
+      'Replace the email, social links, and resources with your own.',
+      'Remove any section that does not match your public profile.',
+    ],
+    visit: 'Visit',
+  },
+  ja: {
+    pageTitle: '私について',
+    kicker: 'TEMPLATE PROFILE / REPLACEABLE CONTENT',
+    greeting: 'こんにちは、ここは',
+    name: 'あなたの名前',
+    role: '研究者 / クリエイター',
+    affiliation: 'あなたの所属 / スタジオ',
+    location: 'あなたの都市、あなたの国',
+    bio: 'ここに、あなたが誰で何を作り、何に関心を持っているかを短く書いてください。',
+    noteLabel: 'Template note',
+    note:
+      'これはテンプレート用の仮文です。自己紹介、研究テーマ、活動方針に差し替えるか、不要ならこのブロックごと削除してください。',
+    stats: {
+      creatives: 'Creative files',
+      posts: 'Journal entries',
+      research: 'Research records',
+    },
+    sections: {
+      recentCreatives: '最近の作品',
+      recentPosts: '最新ブログ',
+      recentResearch: '最新研究',
+      connect: '連絡先',
+      connectDesc: 'ここはあなた自身のプロフィールリンクに置き換えるか、必要なものだけ残してください。',
+      links: 'テンプレート用リソース',
+      linksDesc: 'このデフォルトリンク群は、サイトの調整や公開作業を続けるための参考用です。',
+      viewAll: 'すべて見る',
+      noContent: '近日公開',
+    },
+    email: 'メールを送る',
+    secondaryCta: 'Astro Docs',
+    secondaryLink: 'https://docs.astro.build/',
+    archiveLabel: '置き換えメモ',
+    archiveItems: [
+      '名前、所属、地域を自分の情報に置き換える。',
+      'メール、SNS、参照リンクを自分のものに置き換える。',
+      '不要なセクションはそのまま削除してよい。',
+    ],
+    visit: 'Visit',
+  },
+} as const;
+
+const t = translations[lang as keyof typeof translations] || translations.zh;
+
+const resourceLinks = [
+  {
+    name: 'Astro Docs',
+    url: 'https://docs.astro.build/',
+  },
+  {
+    name: 'Netlify Docs',
+    url: 'https://docs.netlify.com/',
+  },
+  {
+    name: 'MDN Web Docs',
+    url: 'https://developer.mozilla.org/',
+  },
+];
+
+const contactPlatforms = [
+  { url: 'https://github.com/', iconSlug: 'github', labels: { zh: 'GitHub', en: 'GitHub', ja: 'GitHub' } },
+  { url: 'https://www.linkedin.com/', iconSlug: 'linkedin', labels: { zh: 'LinkedIn', en: 'LinkedIn', ja: 'LinkedIn' } },
+  { url: 'https://www.youtube.com/', iconSlug: 'youtube', labels: { zh: 'YouTube', en: 'YouTube', ja: 'YouTube' } },
+  { url: 'https://www.instagram.com/', iconSlug: 'instagram', labels: { zh: 'Instagram', en: 'Instagram', ja: 'Instagram' } },
+] as const;
+
+function formatDate(date: Date, locale: string): string {
+  const localeMap = { zh: 'zh-CN', en: 'en-US', ja: 'ja-JP' };
+  return date.toLocaleDateString(localeMap[locale as keyof typeof localeMap] || 'zh-CN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+---
+
+<P3RLayout title={t.pageTitle} lang={lang} section="about">
+  <div class="about-frame">
+      <header class="grid gap-4 border-b border-[rgba(108,82,58,0.1)] p-4 md:grid-cols-[minmax(0,1.18fr)_minmax(280px,0.72fr)] md:p-8">
+        <div>
+          <p class="about-kicker">{t.kicker}</p>
+          <div class="mt-4 flex flex-col gap-4 md:flex-row md:items-center">
+            <div class="about-portrait-shell">
+              <img src="/avatar-placeholder.svg" alt={t.name} class="h-full w-full rounded-[1.2rem] object-cover" />
+            </div>
+            <div>
+              <p class="about-greeting">{t.greeting}</p>
+              <h1 class="about-title">{t.name}</h1>
+              <p class="mt-2 text-[1.05rem] text-[rgba(53,38,25,0.82)] dark:text-[rgba(206,223,236,0.78)]">{t.role}</p>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <span class="about-chip"><GraduationCap className="h-4 w-4" />{t.affiliation}</span>
+                <span class="about-chip"><MapPin className="h-4 w-4" />{t.location}</span>
+              </div>
+              <p class="mt-4 max-w-2xl text-base leading-8 text-[rgba(49,35,22,0.9)] dark:text-[rgba(206,223,236,0.78)]">{t.bio}</p>
+            </div>
+          </div>
+
+
+          <div class="mt-5 flex flex-wrap gap-3">
+            <a href="mailto:hello@example.com" class="about-primary-link"><Mail className="h-4 w-4" />{t.email}</a>
+            <a href={t.secondaryLink} target="_blank" rel="noopener noreferrer" class="about-secondary-link"><ArrowUpRight className="h-4 w-4" />{t.secondaryCta}</a>
+          </div>
+        </div>
+
+        <aside class="grid content-start gap-4">
+          <section class="about-card">
+            <div class="grid gap-4">
+              <div><span class="about-label">{t.stats.creatives}</span><strong class="about-stat">{allCreatives.length}</strong></div>
+              <div><span class="about-label">{t.stats.posts}</span><strong class="about-stat">{allPosts.length}</strong></div>
+              <div><span class="about-label">{t.stats.research}</span><strong class="about-stat">{allResearch.length}</strong></div>
+            </div>
+          </section>
+
+          <section class="about-card">
+            <p class="about-label">{t.archiveLabel}</p>
+            <ul class="mt-3 grid gap-2 pl-4 text-[0.95rem] leading-7 text-[rgba(56,40,25,0.78)] dark:text-[rgba(206,223,236,0.78)]">
+              {t.archiveItems.map((item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section class="about-card">
+            <p class="about-label">{t.sections.connect}</p>
+            <p class="mt-3 text-[0.94rem] leading-7 text-[rgba(56,40,25,0.78)] dark:text-[rgba(206,223,236,0.78)]">{t.sections.connectDesc}</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              {contactPlatforms.map((item) => (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={item.labels[lang as keyof typeof item.labels] || item.labels.zh}
+                  class="icon-button"
+                  style={`--icon-button-mask: url('https://cdn.simpleicons.org/${item.iconSlug}')`}
+                >
+                  <span class="icon-button__glyph" aria-hidden="true"></span>
+                </a>
+              ))}
+            </div>
+          </section>
+        </aside>
+      </header>
+
+      <div class="grid gap-4 p-4 md:grid-cols-2 md:p-8">
+        <section class="about-card md:col-span-2">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="about-section-title">{t.sections.recentCreatives}</h2>
+            <a href={getRelativeLocaleUrl(lang, 'gallery')} class="about-inline-link">{t.sections.viewAll}<ArrowUpRight className="h-4 w-4" /></a>
+          </div>
+          {latestCreatives.length > 0 ? (
+            <div class="mt-4 grid gap-3 md:grid-cols-3">
+              {latestCreatives.map((item) => {
+                const itemUrl = getRelativeLocaleUrl(lang, `gallery/${item.id.replace(/\.mdx?$/, '')}`);
+                const previewSrc = item.data.previewImage || item.data.heroImage;
+                return (
+                  <a href={itemUrl} class="about-creative-card">
+                    <div class="about-thumb">
+                      {previewSrc ? <img src={previewSrc} alt={item.data.title} class="h-full w-full object-cover" /> : <div class="h-full w-full bg-[linear-gradient(135deg,rgba(139,92,66,0.18),rgba(56,90,116,0.18))]"></div>}
+                    </div>
+                    <strong>{item.data.title}</strong>
+                    <span>{item.data.description}</span>
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <div class="mt-4 text-[rgba(63,47,32,0.72)] dark:text-[rgba(206,223,236,0.78)]">{t.sections.noContent}</div>
+          )}
+        </section>
+
+        <section class="about-card">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="about-section-title">{t.sections.recentPosts}</h2>
+            <a href={getRelativeLocaleUrl(lang, 'blog')} class="about-inline-link">{t.sections.viewAll}<ArrowUpRight className="h-4 w-4" /></a>
+          </div>
+          {latestPosts.length > 0 ? (
+            <div class="mt-4 grid">
+              {latestPosts.map((post) => {
+                const postUrl = getRelativeLocaleUrl(lang, `blog/${post.id.replace(/\.mdx?$/, '')}`);
+                return (
+                  <a href={postUrl} class="about-entry-link">
+                    <div>
+                      <strong>{post.data.title}</strong>
+                      <span>{post.data.description}</span>
+                    </div>
+                    <time datetime={post.data.pubDate.toISOString()} class="about-entry-time"><Calendar className="h-3.5 w-3.5" /><span>{formatDate(post.data.pubDate, lang)}</span></time>
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <div class="mt-4 text-[rgba(63,47,32,0.72)] dark:text-[rgba(206,223,236,0.78)]">{t.sections.noContent}</div>
+          )}
+        </section>
+
+        <section class="about-card">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="about-section-title">{t.sections.recentResearch}</h2>
+            <a href={getRelativeLocaleUrl(lang, 'research')} class="about-inline-link">{t.sections.viewAll}<ArrowUpRight className="h-4 w-4" /></a>
+          </div>
+          {latestResearch.length > 0 ? (
+            <div class="mt-4 grid">
+              {latestResearch.map((item) => {
+                const itemUrl = getRelativeLocaleUrl(lang, `research/${item.id.replace(/\.mdx?$/, '')}`);
+                const isPaper = item.data.type === 'paper';
+                return (
+                  <a href={itemUrl} class="about-entry-link">
+                    <div class="flex gap-3">
+                      <span class="about-entry-icon">{isPaper ? <BookOpen className="h-4 w-4" /> : <Database className="h-4 w-4" />}</span>
+                      <div>
+                        <strong>{item.data.title}</strong>
+                        <span>{item.data.venue || item.data.description}</span>
+                      </div>
+                    </div>
+                    <time datetime={item.data.pubDate.toISOString()} class="about-entry-time"><Calendar className="h-3.5 w-3.5" /><span>{formatDate(item.data.pubDate, lang)}</span></time>
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <div class="mt-4 text-[rgba(63,47,32,0.72)] dark:text-[rgba(206,223,236,0.78)]">{t.sections.noContent}</div>
+          )}
+        </section>
+
+        <section class="about-card">
+          <h2 class="about-section-title">{t.sections.links}</h2>
+          <p class="mt-3 text-[0.95rem] leading-7 text-[rgba(56,40,25,0.78)] dark:text-[rgba(206,223,236,0.78)]">{t.sections.linksDesc}</p>
+          <div class="mt-4 grid gap-3">
+            {resourceLinks.map((link) => (
+              <a href={link.url} target="_blank" rel="noopener noreferrer" class="about-friend-card">
+                <span>{link.name}</span>
+                <span class="about-friend-visit">{t.visit}<ArrowUpRight className="h-3.5 w-3.5" /></span>
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+</P3RLayout>
+
+<style>
+  .about-kicker, .about-label, .about-inline-link, .about-friend-visit, .about-chip, .about-entry-time { font-family: var(--font-mono-ui); }
+  .about-kicker, .about-label, .about-chip, .about-friend-visit { text-transform: uppercase; letter-spacing: 0.14em; }
+  .about-kicker, .about-label, .about-greeting, .about-entry-time, .about-friend-visit { color: rgba(78, 56, 39, 0.88); }
+  .about-portrait-shell { width: 8rem; height: 8rem; flex: none; padding: 0.35rem; border-radius: 1.5rem; }
+  .about-greeting { font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; }
+  .about-title, .about-section-title, .about-stat, .about-creative-card strong, .about-entry-link strong, .about-friend-card > span:first-child { font-family: var(--font-display); color: #24180f; }
+  .about-title { margin-top: 0.45rem; font-size: clamp(2.8rem, 5.2vw, 4.4rem); line-height: 0.98; letter-spacing: -0.02em; }
+  .about-chip { display: inline-flex; align-items: center; gap: 0.45rem; border-radius: 999px; padding: 0.5rem 0.78rem; font-size: 0.72rem; color: rgba(55, 39, 24, 0.88); }
+  .about-card { border-radius: 1.25rem; padding: 1rem 1.05rem; }
+  .about-primary-link, .about-secondary-link { display: inline-flex; align-items: center; gap: 0.48rem; border-radius: 999px; padding: 0.82rem 1.08rem; text-decoration: none; transition: transform 200ms ease; }
+  .about-secondary-link { color: #2f2118; }
+  .about-primary-link:hover, .about-secondary-link:hover, .about-creative-card:hover, .about-friend-card:hover { transform: translateY(-2px); }
+  .about-section-title { font-size: 1.8rem; line-height: 1.08; }
+  .about-inline-link { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: #332418; text-decoration: none; transition: gap 200ms ease, opacity 200ms ease; }
+  .about-inline-link:hover { gap: 0.62rem; opacity: 0.8; }
+  .about-creative-card { display: grid; gap: 0.7rem; color: inherit; text-decoration: none; transition: transform 200ms ease; }
+  .about-thumb { overflow: hidden; border-radius: 1rem; aspect-ratio: 1.18; }
+  .about-thumb img { transition: transform 280ms ease; }
+  .about-creative-card:hover .about-thumb img { transform: scale(1.05); }
+  .about-creative-card span, .about-entry-link span, .about-friend-card > span:first-child + span { font-size: 0.92rem; line-height: 1.68; color: rgba(51, 36, 23, 0.88); }
+  .about-entry-link { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; padding: 0.85rem 0; border-top: 1px solid rgba(109,84,60,0.1); color: inherit; text-decoration: none; transition: transform 200ms ease; }
+  .about-entry-link:first-child { padding-top: 0; border-top: 0; }
+  .about-entry-link:hover { transform: translateX(4px); }
+  .about-entry-time { display: inline-flex; align-items: center; gap: 0.32rem; font-size: 0.7rem; letter-spacing: 0.05em; white-space: nowrap; }
+  .about-entry-icon { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; flex: none; border-radius: 0.7rem; color: #35261b; }
+  .about-friend-card { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.85rem 0.9rem; border-radius: 1rem; text-decoration: none; transition: transform 200ms ease; }
+  :global(html.dark) .about-kicker, :global(html.dark) .about-label, :global(html.dark) .about-greeting, :global(html.dark) .about-entry-time, :global(html.dark) .about-friend-visit { color: rgba(171, 194, 212, 0.72); }
+  :global(html.dark) .about-title, :global(html.dark) .about-section-title, :global(html.dark) .about-stat, :global(html.dark) .about-creative-card strong, :global(html.dark) .about-entry-link strong, :global(html.dark) .about-friend-card > span:first-child { color: #eef5fb; }
+  :global(html.dark) .about-chip, :global(html.dark) .about-inline-link, :global(html.dark) .about-entry-icon { color: #eaf3fb; }
+  :global(html.dark) .about-secondary-link { color: #eaf3fb; }
+  :global(html.dark) .about-entry-link { border-top-color: rgba(96,124,151,0.14); }
+  :global(html.dark) .about-creative-card span, :global(html.dark) .about-entry-link span, :global(html.dark) .about-friend-card > span:first-child + span, :global(html.dark) .about-card p, :global(html.dark) .about-card li, :global(html.dark) .about-card div, :global(html.dark) .about-card ul { color: rgba(206,223,236,0.78); }
+  @media (max-width: 980px) { .about-portrait-shell { width: 6.6rem; height: 6.6rem; } }
+  @media (max-width: 720px) {
+    .about-title {
+      max-width: 8ch;
+      font-size: clamp(2rem, 10vw, 2.85rem);
+    }
+
+    .about-card {
+      padding: 0.9rem;
+      border-radius: 1rem;
+    }
+
+    .about-primary-link,
+    .about-secondary-link {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .about-entry-link,
+    .about-friend-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .about-entry-link > div {
+      width: 100%;
+    }
+
+    .about-entry-time {
+      white-space: normal;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .about-portrait-shell {
+      width: 5.8rem;
+      height: 5.8rem;
+      padding: 0.25rem;
+    }
+
+    .about-chip {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .about-section-title {
+      font-size: 1.55rem;
+    }
+  }
+</style>

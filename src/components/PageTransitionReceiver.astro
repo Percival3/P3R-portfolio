@@ -1,0 +1,11 @@
+<div class="page-transition-receiver" aria-hidden="true"></div>
+
+<script is:inline>
+  (() => {
+    if (document.documentElement.dataset.pageTransitionIn !== 'true') return;
+
+    window.setTimeout(() => {
+      delete document.documentElement.dataset.pageTransitionIn;
+    }, 760);
+  })();
+</script>

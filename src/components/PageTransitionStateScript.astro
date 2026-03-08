@@ -1,0 +1,28 @@
+---
+const storageKey = 'curved-chaos-page-transition-ts';
+const maxAgeMs = 2400;
+---
+
+<script is:inline define:vars={{ storageKey, maxAgeMs }}>
+  (() => {
+    try {
+      const raw = window.sessionStorage.getItem(storageKey);
+      if (!raw) return;
+
+      const ts = Number(raw);
+      if (!Number.isFinite(ts) || Date.now() - ts > maxAgeMs) {
+        window.sessionStorage.removeItem(storageKey);
+        return;
+      }
+
+      document.documentElement.dataset.pageTransitionIn = 'true';
+      window.sessionStorage.removeItem(storageKey);
+    } catch {
+      try {
+        window.sessionStorage.removeItem(storageKey);
+      } catch {
+        // Ignore storage failures.
+      }
+    }
+  })();
+</script>

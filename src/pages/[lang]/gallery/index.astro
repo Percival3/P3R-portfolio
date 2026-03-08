@@ -1,0 +1,187 @@
+---
+import P3RLayout from '../../../layouts/P3RLayout.astro';
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+
+export async function getStaticPaths() {
+  return [
+    { params: { lang: 'zh' } },
+    { params: { lang: 'en' } },
+    { params: { lang: 'ja' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+type CreativeCategory = 'social-observation' | 'anime' | 'other';
+
+const categoryOrder: CreativeCategory[] = ['social-observation', 'anime', 'other'];
+
+const allCreatives = await getCollection('creatives');
+const published = allCreatives
+  .filter((item) => !item.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const byCategory: Record<CreativeCategory, typeof published> = {
+  'social-observation': [],
+  anime: [],
+  other: [],
+};
+
+for (const item of published) {
+  const key = (item.data.category ?? 'other') as CreativeCategory;
+  byCategory[key].push(item);
+}
+
+const texts = {
+  zh: {
+    pageTitle: '作品档案',
+    kicker: 'VISUAL CATALOG / CURATED FRAGMENTS',
+    title: '图像、专题与被整理过的记忆切片。',
+    subtitle: '关于世界的记录与遐想。',
+    noteLabel: 'Catalog note',
+    note: '列表页保持更强的视觉存在，但仍然服从目录逻辑。分类、标题、摘要和技术线索都应比氛围本身更清楚。',
+    noItems: '暂无作品',
+    noItemsInCategory: '该专题暂无作品。',
+    categories: {
+      'social-observation': '社会观察',
+      anime: '动画',
+      other: '其他专题',
+    },
+  },
+  en: {
+    pageTitle: 'Gallery Catalog',
+    kicker: 'VISUAL CATALOG / CURATED FRAGMENTS',
+    title: 'Images, themes, and filed fragments of memory.',
+    subtitle: 'Records of the world, and the reveries it leaves behind.',
+    noteLabel: 'Catalog note',
+    note: 'The gallery can stay more visual than the archive pages, but it still answers to catalog logic: category, title, summary, and technical cues should remain legible.',
+    noItems: 'No works yet',
+    noItemsInCategory: 'No works in this topic yet.',
+    categories: {
+      'social-observation': 'Social Observation',
+      anime: 'Anime',
+      other: 'Other Topics',
+    },
+  },
+  ja: {
+    pageTitle: '作品アーカイブ',
+    kicker: 'VISUAL CATALOG / CURATED FRAGMENTS',
+    title: 'イメージ、主題、そして整理された記憶の断片。',
+    subtitle: '世界についての記録と、それに向けた遐想。',
+    noteLabel: 'Catalog note',
+    note: 'このページは他のアーカイブより視覚性を強めてよいですが、それでも分類、題名、要約、技術の手がかりが最初に読めることを優先します。',
+    noItems: '作品はまだありません',
+    noItemsInCategory: 'このテーマにはまだ作品がありません。',
+    categories: {
+      'social-observation': '社会観察',
+      anime: 'アニメ',
+      other: 'その他',
+    },
+  },
+} as const;
+
+const t = texts[lang as keyof typeof texts] || texts.en;
+---
+
+<P3RLayout title={t.pageTitle} lang={lang} section="gallery">
+  <div class="gallery-frame">
+      <header class="grid gap-4 border-b border-[rgba(108,82,58,0.1)] p-4 md:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.7fr)] md:p-8">
+        <div>
+          <p class="gallery-kicker">{t.kicker}</p>
+          <h1 class="gallery-title">{t.title}</h1>
+          <p class="mt-4 max-w-3xl text-base leading-8 text-[rgba(49,35,22,0.9)] dark:text-[rgba(206,223,236,0.78)]">{t.subtitle}</p>
+        </div>
+      </header>
+
+      {published.length > 0 ? (
+        <div class="grid gap-6 p-4 md:p-8">
+          {categoryOrder.map((category) => {
+            const items = byCategory[category];
+            return (
+              <section class="gallery-section">
+                <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h2 class="gallery-section-title">{t.categories[category]}</h2>
+                  <span class="gallery-count-chip">{items.length}</span>
+                </div>
+
+                {items.length > 0 ? (
+                  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {items.map((item) => {
+                      const itemUrl = getRelativeLocaleUrl(lang, `gallery/${item.id.replace(/\.mdx?$/, '')}`);
+                      const previewSrc = item.data.previewImage || item.data.heroImage;
+
+                      return (
+                        <a href={itemUrl} class="gallery-item-card corner-marks">
+                          <div class="gallery-item-thumb">
+                            {previewSrc ? (
+                              <img src={previewSrc} alt={item.data.title} class="h-full w-full object-cover" />
+                            ) : (
+                              <div class="h-full w-full bg-[linear-gradient(135deg,rgba(139,92,66,0.18),rgba(56,90,116,0.18))]"></div>
+                            )}
+                          </div>
+                          <div class="gallery-item-copy">
+                            <span class="gallery-item-kind">{t.categories[category]}</span>
+                            <strong>{item.data.title}</strong>
+                            <p>{item.data.description}</p>
+                            {item.data.techStack && item.data.techStack.length > 0 && (
+                              <div class="gallery-tag-row">
+                                {item.data.techStack.slice(0, 3).map((tech) => (
+                                  <span class="gallery-tag">{tech}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div class="gallery-empty">{t.noItemsInCategory}</div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="p-8 text-[rgba(63,47,32,0.72)] dark:text-[rgba(206,223,236,0.78)]">{t.noItems}</div>
+      )}
+    </div>
+</P3RLayout>
+
+<style>
+  .gallery-kicker, .gallery-label, .gallery-item-kind, .gallery-tag { font-family: var(--font-mono-ui); text-transform: uppercase; }
+  .gallery-kicker, .gallery-label, .gallery-item-kind { letter-spacing: 0.14em; color: rgba(78,56,39,0.88); }
+  .gallery-title, .gallery-section-title, .gallery-item-copy strong { font-family: var(--font-display); color: #24180f; }
+  .gallery-title { margin-top: 0.7rem; max-width: 12ch; font-size: clamp(2.7rem, 5.3vw, 4.7rem); line-height: 0.98; letter-spacing: -0.02em; }
+  .gallery-card { border-radius: 1.25rem; padding: 1rem 1.05rem; }
+  .gallery-section-title { font-size: 1.8rem; line-height: 1.08; }
+  .gallery-count-chip { display: inline-flex; align-items: center; justify-content: center; min-width: 2.5rem; border-radius: 999px; padding: 0.48rem 0.8rem; font-family: var(--font-mono-ui); font-size: 0.75rem; color: rgba(55,39,24,0.88); }
+  .gallery-item-card {
+    display: grid;
+    gap: 0.9rem;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    padding: 0.75rem;
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  }
+  .gallery-item-card:hover { transform: translateY(-3px); border-color: var(--component-accent-border-strong); box-shadow: var(--component-accent-hover-shadow); }
+  .gallery-item-thumb { overflow: hidden; border-radius: 1rem; background: #17130f; aspect-ratio: 1.25; }
+  .gallery-item-thumb img { transition: transform 300ms ease; }
+  .gallery-item-card:hover .gallery-item-thumb img { transform: scale(1.05); }
+  .gallery-item-copy strong { display: block; font-size: 1.26rem; line-height: 1.12; }
+  .gallery-item-copy p { margin-top: 0.35rem; font-size: 0.95rem; line-height: 1.72; color: rgba(51,36,23,0.88); }
+  .gallery-tag-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.75rem; }
+  .gallery-tag { border-radius: 999px; padding: 0.38rem 0.68rem; font-size: 0.68rem; letter-spacing: 0.08em; color: rgba(55,39,24,0.88); }
+  .gallery-empty { color: rgba(60,44,29,0.82); }
+  :global(html.dark) .gallery-kicker, :global(html.dark) .gallery-label, :global(html.dark) .gallery-item-kind { color: rgba(171,194,212,0.72); }
+  :global(html.dark) .gallery-title, :global(html.dark) .gallery-section-title, :global(html.dark) .gallery-item-copy strong { color: #eef5fb; }
+  :global(html.dark) .gallery-count-chip, :global(html.dark) .gallery-tag { color: #eaf3fb; }
+  :global(html.dark) .gallery-item-copy p, :global(html.dark) .gallery-empty { color: rgba(206,223,236,0.78); }
+  @media (max-width: 720px) {
+    .gallery-title { font-size: clamp(2.1rem, 11vw, 3rem); }
+  }
+</style>

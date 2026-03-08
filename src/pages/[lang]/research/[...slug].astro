@@ -1,0 +1,648 @@
+---
+import P3RLayout from '../../../layouts/P3RLayout.astro';
+import { getCollection, render } from 'astro:content';
+import { ArrowLeft, Calendar, Clock, FileText, User, Database, BookOpen, ExternalLink } from 'lucide-react';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { calculateReadingStats } from '../../../utils/reading-time';
+
+export async function getStaticPaths() {
+  const allResearch = await getCollection('research');
+
+  const paths = [];
+  const langs = ['zh', 'en', 'ja'];
+
+  for (const item of allResearch) {
+    for (const lang of langs) {
+      paths.push({
+        params: {
+          lang,
+          slug: item.id.replace(/\.mdx?$/, ''),
+        },
+        props: { item },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { item } = Astro.props;
+const { lang } = Astro.params;
+
+const { Content } = await render(item);
+const stats = calculateReadingStats(item.body || '');
+const isPaper = item.data.type === 'paper';
+const canonical = new URL(
+  getRelativeLocaleUrl(item.data.lang, `research/${item.id.replace(/\.mdx?$/, '')}`),
+  Astro.site ?? Astro.url,
+).toString();
+
+const allResearch = await getCollection('research');
+const filedResearch = allResearch
+  .filter((entry) => !entry.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const currentIndex = filedResearch.findIndex((entry) => entry.id === item.id);
+const fileNumber = String((currentIndex >= 0 ? currentIndex : 0) + 1).padStart(2, '0');
+
+const texts = {
+  zh: {
+    back: '返回研究目录',
+    kicker: 'RESEARCH RECORD / READING ROOM',
+    fileLabel: 'Filed as',
+    paperKind: 'paper',
+    datasetKind: 'dataset',
+    author: '作者',
+    filed: '归档',
+    reading: '阅读',
+    length: '篇幅',
+    venue: '发表',
+    resources: 'Resource links',
+    minute: '分钟',
+    words: '字',
+    keywords: 'Keywords',
+    pdf: 'PDF',
+    doi: 'DOI',
+    dataset: 'Dataset',
+  },
+  en: {
+    back: 'Back to Research',
+    kicker: 'RESEARCH RECORD / READING ROOM',
+    fileLabel: 'Filed as',
+    paperKind: 'paper',
+    datasetKind: 'dataset',
+    author: 'Author',
+    filed: 'Filed',
+    reading: 'Reading',
+    length: 'Length',
+    venue: 'Venue',
+    resources: 'Resource links',
+    minute: 'min',
+    words: 'words',
+    keywords: 'Keywords',
+    pdf: 'PDF',
+    doi: 'DOI',
+    dataset: 'Dataset',
+  },
+  ja: {
+    back: '研究一覧に戻る',
+    kicker: 'RESEARCH RECORD / READING ROOM',
+    fileLabel: 'Filed as',
+    paperKind: 'paper',
+    datasetKind: 'dataset',
+    author: 'Author',
+    filed: '記録日',
+    reading: 'Reading',
+    length: 'Length',
+    venue: 'Venue',
+    resources: 'Resource links',
+    minute: '分',
+    words: '文字',
+    keywords: 'Keywords',
+    pdf: 'PDF',
+    doi: 'DOI',
+    dataset: 'Dataset',
+  },
+} as const;
+
+const t = texts[lang as keyof typeof texts] || texts.zh;
+
+function formatDate(date: Date, locale: string): string {
+  const localeMap = {
+    zh: 'zh-CN',
+    en: 'en-US',
+    ja: 'ja-JP',
+  };
+
+  return date.toLocaleDateString(localeMap[locale as keyof typeof localeMap] || 'zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+---
+
+<P3RLayout title={item.data.title} lang={lang} section="research" canonical={canonical} detailThemeToggle={true}>
+  <article class="detail-room-shell">
+    <div class="detail-room-frame">
+      <header class="detail-room-header">
+        <div class="detail-room-main">
+          <a href={getRelativeLocaleUrl(lang, 'research')} class="detail-room-back">
+            <ArrowLeft className="h-4 w-4" />
+            <span>{t.back}</span>
+          </a>
+
+          <div class="detail-room-topline">
+            <span class="detail-room-kicker">{t.kicker}</span>
+            <span class="detail-room-divider" aria-hidden="true"></span>
+            <span class="detail-room-file">FILE {fileNumber} / {filedResearch.length || 1}</span>
+          </div>
+
+          <div class="detail-room-kind-wrap">
+            <span class="detail-room-kind-badge">
+              {isPaper ? <BookOpen className="h-4 w-4" /> : <Database className="h-4 w-4" />}
+              <span>{isPaper ? t.paperKind : t.datasetKind}</span>
+            </span>
+          </div>
+
+          <h1 class="detail-room-title">{item.data.title}</h1>
+          <p class="detail-room-summary">{item.data.description}</p>
+
+          {(item.data.venue || item.data.doi) && (
+            <div class="detail-room-inline-meta">
+              {item.data.venue && (
+                <span class="detail-room-inline-chip">
+                  <span>{t.venue}</span>
+                  <strong>{item.data.venue}</strong>
+                </span>
+              )}
+              {item.data.doi && (
+                <a
+                  href={`https://doi.org/${item.data.doi}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="detail-room-inline-chip detail-room-inline-link"
+                >
+                  <span>{t.doi}</span>
+                  <strong>{item.data.doi}</strong>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+          )}
+
+          {item.data.heroImage && (
+            <figure class="detail-room-visual">
+              <img src={item.data.heroImage} alt={item.data.title} />
+            </figure>
+          )}
+        </div>
+
+        <aside class="detail-room-sidebar">
+          <section class="detail-room-card">
+            <div class="detail-room-card-row">
+              <span class="detail-room-card-label">{t.fileLabel}</span>
+              <strong class="detail-room-card-value">{isPaper ? t.paperKind : t.datasetKind}</strong>
+            </div>
+
+            <div class="detail-room-facts">
+              <div class="detail-room-fact">
+                <span class="detail-room-fact-label">
+                  <User className="h-4 w-4" />
+                  <span>{t.author}</span>
+                </span>
+                <strong class="detail-room-fact-value">{item.data.author}</strong>
+              </div>
+
+              <div class="detail-room-fact">
+                <span class="detail-room-fact-label">
+                  <Calendar className="h-4 w-4" />
+                  <span>{t.filed}</span>
+                </span>
+                <strong class="detail-room-fact-value">{formatDate(item.data.pubDate, lang)}</strong>
+              </div>
+
+              <div class="detail-room-fact">
+                <span class="detail-room-fact-label">
+                  <Clock className="h-4 w-4" />
+                  <span>{t.reading}</span>
+                </span>
+                <strong class="detail-room-fact-value">
+                  {stats.readingTime} {t.minute}
+                </strong>
+              </div>
+
+              <div class="detail-room-fact">
+                <span class="detail-room-fact-label">
+                  <FileText className="h-4 w-4" />
+                  <span>{t.length}</span>
+                </span>
+                <strong class="detail-room-fact-value">
+                  {stats.wordCount.toLocaleString()} {t.words}
+                </strong>
+              </div>
+            </div>
+          </section>
+
+          {(item.data.pdfUrl || item.data.datasetUrl || item.data.doi) && (
+            <section class="detail-room-card">
+              <p class="detail-room-card-label">{t.resources}</p>
+              <div class="detail-room-resource-list">
+                {item.data.pdfUrl && (
+                  <a href={item.data.pdfUrl} target="_blank" rel="noreferrer" class="detail-room-resource-link">
+                    <FileText className="h-4 w-4" />
+                    <span>{t.pdf}</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+
+                {item.data.datasetUrl && (
+                  <a href={item.data.datasetUrl} target="_blank" rel="noreferrer" class="detail-room-resource-link">
+                    <Database className="h-4 w-4" />
+                    <span>{t.dataset}</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+
+                {item.data.doi && (
+                  <a href={`https://doi.org/${item.data.doi}`} target="_blank" rel="noreferrer" class="detail-room-resource-link">
+                    <span>{t.doi}</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            </section>
+          )}
+
+          {item.data.tags && item.data.tags.length > 0 && (
+            <section class="detail-room-card">
+              <p class="detail-room-card-label">{t.keywords}</p>
+              <div class="detail-room-tag-row">
+                {item.data.tags.map((tag) => (
+                  <span class="detail-room-tag">{tag}</span>
+                ))}
+              </div>
+            </section>
+          )}
+        </aside>
+      </header>
+
+      <section class="detail-room-content-card">
+        <div
+          class="detail-room-prose prose prose-lg max-w-none article-prose dark:prose-invert
+                 prose-headings:font-bold prose-p:leading-8 prose-li:leading-8
+                 prose-a:no-underline hover:prose-a:underline
+                 prose-code:before:content-[''] prose-code:after:content-['']
+                 prose-img:my-8 prose-img:rounded-[1.35rem]
+                 prose-pre:rounded-[1.2rem] prose-pre:shadow-xl
+                 prose-blockquote:rounded-r-[1rem]
+                 animate-in fade-in slide-in-from-bottom-4 duration-700"
+        >
+          <Content />
+        </div>
+      </section>
+
+      <footer class="detail-room-footer">
+        <a href={getRelativeLocaleUrl(lang, 'research')} class="detail-room-back detail-room-back-bottom">
+          <ArrowLeft className="h-4 w-4" />
+          <span>{t.back}</span>
+        </a>
+      </footer>
+    </div>
+  </article>
+</P3RLayout>
+
+<style>
+  .detail-room-shell {
+    width: min(1120px, calc(100% - 1.5rem));
+    margin: 0 auto;
+    padding-bottom: clamp(2.8rem, 6vw, 4.6rem);
+  }
+
+  .detail-room-header,
+  .detail-room-content-card,
+  .detail-room-footer {
+    position: relative;
+    z-index: 1;
+  }
+
+  .detail-room-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.16fr) minmax(260px, 0.72fr);
+    gap: 1.25rem;
+    padding: clamp(1.2rem, 3vw, 2rem);
+    border-bottom: 1px solid rgba(108, 82, 58, 0.1);
+  }
+
+  .detail-room-back,
+  .detail-room-kicker,
+  .detail-room-file,
+  .detail-room-card-label,
+  .detail-room-fact-label,
+  .detail-room-tag,
+  .detail-room-kind-badge,
+  .detail-room-inline-chip,
+  .detail-room-resource-link {
+    font-family: var(--font-mono-ui);
+  }
+
+  .detail-room-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.48rem;
+    margin-bottom: 1rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #302116;
+    text-decoration: none;
+    transition: gap 180ms ease, opacity 180ms ease;
+  }
+
+  .detail-room-back:hover {
+    gap: 0.65rem;
+    opacity: 0.8;
+  }
+
+  .detail-room-topline {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .detail-room-kicker,
+  .detail-room-file,
+  .detail-room-card-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: rgba(78, 56, 39, 0.88);
+  }
+
+  .detail-room-divider {
+    flex: 1;
+    min-width: 4rem;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(104, 79, 58, 0.24), transparent);
+  }
+
+  .detail-room-kind-wrap {
+    margin-top: 1rem;
+  }
+
+  .detail-room-kind-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.48rem;
+    border-radius: 999px;
+    padding: 0.48rem 0.82rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(55, 39, 24, 0.9);
+  }
+
+  .detail-room-title {
+    margin-top: 0.8rem;
+    max-width: 12ch;
+    font-family: var(--font-display);
+    font-size: clamp(2.7rem, 5.3vw, 4.7rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: #23180f;
+    text-wrap: balance;
+  }
+
+  .detail-room-summary {
+    max-width: 44rem;
+    margin-top: 1rem;
+    font-size: clamp(1rem, 1.35vw, 1.12rem);
+    line-height: 1.86;
+    color: rgba(49, 35, 22, 0.9);
+    text-wrap: pretty;
+  }
+
+  .detail-room-inline-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1rem;
+  }
+
+  .detail-room-inline-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    border-radius: 999px;
+    padding: 0.48rem 0.78rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    color: rgba(55, 39, 24, 0.9);
+    text-decoration: none;
+  }
+
+  .detail-room-inline-chip strong {
+    font-weight: 500;
+  }
+
+  .detail-room-inline-link {
+    transition: opacity 180ms ease;
+  }
+
+  .detail-room-inline-link:hover {
+    opacity: 0.8;
+  }
+
+  .detail-room-visual {
+    margin-top: 1.3rem;
+    overflow: hidden;
+    border-radius: 1.4rem;
+    background: #17130f;
+  }
+
+  .detail-room-visual img {
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .detail-room-sidebar {
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+  }
+
+  .detail-room-card {
+    border-radius: 1.25rem;
+    padding: 1rem 1.05rem;
+  }
+
+  .detail-room-card-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .detail-room-card-value,
+  .detail-room-fact-value {
+    font-family: var(--font-display);
+    color: #20150d;
+  }
+
+  .detail-room-card-value {
+    font-size: 1.18rem;
+  }
+
+  .detail-room-facts {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .detail-room-fact {
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(109, 84, 60, 0.1);
+  }
+
+  .detail-room-fact:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .detail-room-fact-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.48rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(82, 60, 41, 0.84);
+  }
+
+  .detail-room-fact-value {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 1.08rem;
+    line-height: 1.5;
+  }
+
+  .detail-room-resource-list {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.75rem;
+  }
+
+  .detail-room-resource-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.48rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #302116;
+    text-decoration: none;
+    transition: gap 180ms ease, opacity 180ms ease;
+  }
+
+  .detail-room-resource-link:hover {
+    gap: 0.65rem;
+    opacity: 0.8;
+  }
+
+  .detail-room-tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.75rem;
+  }
+
+  .detail-room-tag {
+    border-radius: 999px;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: rgba(55, 39, 24, 0.88);
+  }
+
+  .detail-room-content-card {
+    padding: clamp(1.2rem, 3vw, 2rem);
+  }
+
+  .detail-room-prose {
+    width: min(100%, 760px);
+    margin: 0 auto;
+  }
+
+  .detail-room-footer {
+    padding: 0 0 clamp(1.1rem, 3vw, 1.5rem);
+    text-align: center;
+  }
+
+  .detail-room-back-bottom {
+    margin-bottom: 0;
+  }
+
+  :global(html.dark) .detail-room-header,
+  :global(html.dark) .detail-room-content-card {
+    border-color: rgba(95, 123, 150, 0.14);
+  }
+
+  :global(html.dark) .detail-room-back,
+  :global(html.dark) .detail-room-kicker,
+  :global(html.dark) .detail-room-file,
+  :global(html.dark) .detail-room-card-label,
+  :global(html.dark) .detail-room-fact-label {
+    color: rgba(171, 194, 212, 0.72);
+  }
+
+  :global(html.dark) .detail-room-divider {
+    background: linear-gradient(90deg, rgba(116, 149, 176, 0.28), transparent);
+  }
+
+  :global(html.dark) .detail-room-title,
+  :global(html.dark) .detail-room-card-value,
+  :global(html.dark) .detail-room-fact-value {
+    color: #eef5fb;
+  }
+
+  :global(html.dark) .detail-room-summary {
+    color: rgba(206, 223, 236, 0.78);
+  }
+
+  :global(html.dark) .detail-room-kind-badge,
+  :global(html.dark) .detail-room-inline-chip,
+  :global(html.dark) .detail-room-resource-link {
+    color: #eaf3fb;
+  }
+
+  :global(html.dark) .detail-room-fact {
+    border-top-color: rgba(96, 124, 151, 0.14);
+  }
+
+  :global(html.dark) .detail-room-tag {
+    color: rgba(214, 227, 238, 0.78);
+  }
+
+  :global(.katex) {
+    font-size: 1.08em;
+  }
+
+  :global(.katex-display) {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .detail-room-prose :global(pre) {
+    padding: 1.25rem !important;
+    overflow-x: auto;
+  }
+
+  .detail-room-prose :global(pre code) {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .detail-room-prose :global(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .detail-room-prose :global(table) {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 980px) {
+    .detail-room-header {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

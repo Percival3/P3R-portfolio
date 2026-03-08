@@ -1,0 +1,632 @@
+---
+import P3RLayout from '../../../layouts/P3RLayout.astro';
+import { getCollection } from 'astro:content';
+import { Calendar, Clock, FileText, ArrowUpRight } from 'lucide-react';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { calculateReadingStats } from '../../../utils/reading-time';
+
+export async function getStaticPaths() {
+  return [
+    { params: { lang: 'zh' } },
+    { params: { lang: 'en' } },
+    { params: { lang: 'ja' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+const allPosts = await getCollection('posts');
+const publishedPosts = allPosts
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const pageTitle = {
+  zh: '博客档案',
+  en: 'Blog Archive',
+  ja: 'ブログアーカイブ',
+};
+
+const texts = {
+  zh: {
+    kicker: 'JOURNAL ARCHIVE / INDEX',
+    title: '写作、注释与持续更新的思想片段。',
+    subtitle:
+      '散步时，一道不停流淌的河流。',
+    noteLabel: 'Archive note',
+    note:
+      '博客列表页不再延续首页的封面感，而是转向更稳定的索引结构。你进入这里之后，应该立刻知道可以读什么，而不是继续被氛围牵着走。',
+    countLabel: 'Filed entries',
+    timeLabel: 'Reading volume',
+    latestLabel: 'Latest filing',
+    minuteUnit: '分钟',
+    wordUnit: '字',
+    articleUnit: '篇',
+    readMore: '阅读全文',
+    noPosts: '暂无文章',
+    tagsLabel: 'Filed under',
+    metaKind: 'essay',
+  },
+  en: {
+    kicker: 'JOURNAL ARCHIVE / INDEX',
+    title: 'Writing, annotations, and a slowly growing archive of thought.',
+    subtitle:
+      'A river that keeps flowing through a walk.',
+    noteLabel: 'Archive note',
+    note:
+      'The archive should not repeat the homepage cover. Once you arrive here, clarity matters more than atmosphere: the structure should tell you what is worth reading at a glance.',
+    countLabel: 'Filed entries',
+    timeLabel: 'Reading volume',
+    latestLabel: 'Latest filing',
+    minuteUnit: 'min',
+    wordUnit: 'words',
+    articleUnit: 'entries',
+    readMore: 'Read entry',
+    noPosts: 'No posts yet',
+    tagsLabel: 'Filed under',
+    metaKind: 'essay',
+  },
+  ja: {
+    kicker: 'JOURNAL ARCHIVE / INDEX',
+    title: '文章、注釈、そして少しずつ増えていく思考のアーカイブ。',
+    subtitle:
+      '散歩のあいだを、流れつづける一本の川。',
+    noteLabel: 'Archive note',
+    note:
+      'このページはホームの表紙感を繰り返しません。ここに入ったあとは雰囲気よりも可読性が重要で、何を読むべきかがすぐ分かる構造であるべきです。',
+    countLabel: 'Filed entries',
+    timeLabel: 'Reading volume',
+    latestLabel: 'Latest filing',
+    minuteUnit: '分',
+    wordUnit: '文字',
+    articleUnit: '件',
+    readMore: '続きを読む',
+    noPosts: '記事はまだありません',
+    tagsLabel: 'Filed under',
+    metaKind: 'essay',
+  },
+} as const;
+
+const t = texts[lang as keyof typeof texts] || texts.zh;
+
+function formatDate(date: Date, locale: string): string {
+  const localeMap = {
+    zh: 'zh-CN',
+    en: 'en-US',
+    ja: 'ja-JP',
+  };
+
+  return date.toLocaleDateString(localeMap[locale as keyof typeof localeMap] || 'zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+const archiveStats = publishedPosts.map((post) => {
+  const stats = calculateReadingStats(post.body || '');
+  return { post, stats };
+});
+
+const totalReadingMinutes = archiveStats.reduce((sum, item) => sum + item.stats.readingTime, 0);
+const latestDate = publishedPosts[0]?.data.pubDate;
+---
+
+<P3RLayout title={pageTitle[lang as keyof typeof pageTitle] || 'Blog'} lang={lang} section="blog">
+  <div class="blog-archive-frame">
+      <header class="blog-archive-hero">
+        <div class="blog-archive-copy">
+          <p class="blog-archive-kicker">{t.kicker}</p>
+          <h1 class="blog-archive-title">{t.title}</h1>
+          <p class="blog-archive-subtitle">{t.subtitle}</p>
+
+        </div>
+
+        <aside class="blog-archive-overview">
+          <div class="blog-overview-card corner-marks">
+            <span class="blog-overview-label">{t.countLabel}</span>
+            <strong class="blog-overview-value">
+              {publishedPosts.length}
+              <span>{t.articleUnit}</span>
+            </strong>
+          </div>
+
+          <div class="blog-overview-card corner-marks">
+            <span class="blog-overview-label">{t.timeLabel}</span>
+            <strong class="blog-overview-value">
+              {totalReadingMinutes}
+              <span>{t.minuteUnit}</span>
+            </strong>
+          </div>
+
+          <div class="blog-overview-card corner-marks">
+            <span class="blog-overview-label">{t.latestLabel}</span>
+            <strong class="blog-overview-date">
+              {latestDate ? formatDate(latestDate, lang) : 'N/A'}
+            </strong>
+          </div>
+        </aside>
+      </header>
+
+      {archiveStats.length > 0 ? (
+        <div class="blog-archive-list">
+          {archiveStats.map(({ post, stats }, index) => {
+            const postUrl = getRelativeLocaleUrl(lang, `blog/${post.id.replace(/\.mdx?$/, '')}`);
+            const entryNumber = String(index + 1).padStart(2, '0');
+
+            return (
+              <article class:list={['blog-entry', post.data.heroImage && 'has-thumb']}>
+                <div class="blog-entry-rail">
+                  <span class="blog-entry-number">{entryNumber}</span>
+                  <span class="blog-entry-kind">{t.metaKind}</span>
+                </div>
+
+                <div class="blog-entry-body">
+                  <div class="blog-entry-meta">
+                    <span class="blog-entry-meta-item">
+                      <Calendar className="h-4 w-4" />
+                      <time datetime={post.data.pubDate.toISOString()}>
+                        {formatDate(post.data.pubDate, lang)}
+                      </time>
+                    </span>
+                    <span class="blog-entry-meta-item">
+                      <Clock className="h-4 w-4" />
+                      <span>
+                        {stats.readingTime} {t.minuteUnit}
+                      </span>
+                    </span>
+                    <span class="blog-entry-meta-item">
+                      <FileText className="h-4 w-4" />
+                      <span>
+                        {stats.wordCount.toLocaleString()} {t.wordUnit}
+                      </span>
+                    </span>
+                  </div>
+
+                  <a href={postUrl} class="blog-entry-title-link">
+                    <h2 class="blog-entry-title">{post.data.title}</h2>
+                  </a>
+
+                  <p class="blog-entry-description">{post.data.description}</p>
+
+                  {post.data.tags && post.data.tags.length > 0 && (
+                    <div class="blog-entry-tags" aria-label={t.tagsLabel}>
+                      <span class="blog-entry-tags-label">{t.tagsLabel}</span>
+                      <div class="blog-entry-tag-row">
+                        {post.data.tags.map((tag) => (
+                          <span class="blog-entry-tag">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <a href={postUrl} class="blog-entry-link">
+                    <span>{t.readMore}</span>
+                    <ArrowUpRight className="h-4 w-4" />
+                  </a>
+                </div>
+
+                {post.data.heroImage && (
+                  <a href={postUrl} class="blog-entry-thumb" aria-label={post.data.title}>
+                    <img src={post.data.heroImage} alt={post.data.title} loading="lazy" />
+                  </a>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="blog-archive-empty">
+          <p>{t.noPosts}</p>
+        </div>
+      )}
+    </div>
+</P3RLayout>
+
+<style>
+  .blog-archive-hero {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.65fr);
+    gap: 1.35rem;
+    padding: clamp(1.2rem, 3vw, 2rem);
+    border-bottom: 1px solid rgba(108, 82, 58, 0.1);
+  }
+
+  .blog-archive-kicker,
+  .blog-overview-label,
+  .blog-archive-note-label,
+  .blog-entry-number,
+  .blog-entry-kind,
+  .blog-entry-tags-label {
+    font-family: var(--font-mono-ui);
+    text-transform: uppercase;
+    letter-spacing: 0.17em;
+  }
+
+  .blog-archive-kicker {
+    font-size: 0.73rem;
+    color: rgba(78, 56, 39, 0.88);
+  }
+
+  .blog-archive-title {
+    margin-top: 0.7rem;
+    max-width: 12ch;
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 5.2vw, 4.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: #23180f;
+    text-wrap: balance;
+  }
+
+  .blog-archive-subtitle {
+    max-width: 46rem;
+    margin-top: 1rem;
+    font-size: clamp(1rem, 1.35vw, 1.14rem);
+    line-height: 1.9;
+    color: rgba(49, 35, 22, 0.9);
+    text-wrap: pretty;
+  }
+
+  .blog-archive-note {
+    margin-top: 1.45rem;
+    max-width: 40rem;
+    padding: 1rem 1.1rem;
+    border-radius: 1.25rem;
+    border-left-width: 2px;
+  }
+
+  .blog-archive-note-label {
+    font-size: 0.66rem;
+    color: rgba(84, 61, 42, 0.84);
+  }
+
+  .blog-archive-note-text {
+    margin-top: 0.55rem;
+    font-size: 0.96rem;
+    line-height: 1.8;
+    color: rgba(51, 36, 23, 0.88);
+  }
+
+  .blog-archive-overview {
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+  }
+
+  .blog-overview-card {
+    border-radius: 1.25rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid transparent;
+    transition: border-color 220ms ease, box-shadow 220ms ease;
+  }
+
+  .blog-overview-card:hover {
+    border-color: var(--component-accent-border-strong);
+    box-shadow: var(--component-accent-hover-shadow);
+  }
+
+  .blog-overview-label {
+    display: block;
+    font-size: 0.64rem;
+    color: rgba(84, 61, 42, 0.82);
+  }
+
+  .blog-overview-value,
+  .blog-overview-date {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin-top: 0.48rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 2.8vw, 2.25rem);
+    line-height: 1.05;
+    color: #24180f;
+  }
+
+  .blog-overview-value span {
+    font-family: var(--font-mono-ui);
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: rgba(84, 61, 42, 0.84);
+  }
+
+  .blog-overview-date {
+    display: block;
+    font-size: 1.12rem;
+    line-height: 1.55;
+  }
+
+  .blog-archive-list {
+    position: relative;
+    z-index: 1;
+    display: grid;
+  }
+
+  .blog-entry {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 1.2rem;
+    padding: 1.35rem clamp(1.2rem, 3vw, 2rem);
+    border-top: 1px solid rgba(108, 82, 58, 0.1);
+  }
+
+  .blog-entry.has-thumb {
+    grid-template-columns: 84px minmax(0, 1fr) 180px;
+  }
+
+  .blog-entry-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding-top: 0.25rem;
+  }
+
+  .blog-entry-number {
+    font-size: 0.78rem;
+    color: rgba(88, 64, 45, 0.84);
+  }
+
+  .blog-entry-kind {
+    font-size: 0.62rem;
+    color: rgba(93, 69, 48, 0.74);
+  }
+
+  .blog-entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem 1rem;
+    color: rgba(82, 60, 41, 0.82);
+  }
+
+  .blog-entry-meta,
+  .blog-entry-link,
+  .blog-entry-tag {
+    font-family: var(--font-mono-ui);
+  }
+
+  .blog-entry-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+  }
+
+  .blog-entry-title-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .blog-entry-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 2.8vw, 2.45rem);
+    line-height: 1.02;
+    color: #22170e;
+    transition: opacity 180ms ease;
+  }
+
+  .blog-entry-title-link:hover .blog-entry-title {
+    opacity: 0.82;
+  }
+
+  .blog-entry-description {
+    max-width: 48rem;
+    margin-top: 0.7rem;
+    font-size: 1rem;
+    line-height: 1.82;
+    color: rgba(51, 36, 23, 0.88);
+    text-wrap: pretty;
+  }
+
+  .blog-entry-tags {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .blog-entry-tags-label {
+    font-size: 0.62rem;
+    color: rgba(84, 61, 42, 0.82);
+  }
+
+  .blog-entry-tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .blog-entry-tag {
+    border-radius: 999px;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: rgba(55, 39, 24, 0.88);
+  }
+
+  .blog-entry-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.48rem;
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2c2016;
+    text-decoration: none;
+    transition: gap 180ms ease, opacity 180ms ease;
+  }
+
+  .blog-entry-link:hover {
+    gap: 0.65rem;
+    opacity: 0.8;
+  }
+
+  .blog-entry-thumb {
+    align-self: center;
+    display: block;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgba(111, 86, 62, 0.14);
+    aspect-ratio: 0.92;
+    background: #17130f;
+  }
+
+  .blog-entry-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 300ms ease, filter 300ms ease;
+  }
+
+  .blog-entry-thumb:hover img {
+    transform: scale(1.06);
+    filter: saturate(1.04);
+  }
+
+  .blog-archive-empty {
+    position: relative;
+    z-index: 1;
+    padding: 2rem;
+    color: rgba(63, 47, 32, 0.72);
+    text-align: center;
+  }
+
+  :global(html.dark) .blog-archive-hero,
+  :global(html.dark) .blog-entry {
+    border-color: rgba(95, 123, 150, 0.14);
+  }
+
+  :global(html.dark) .blog-archive-kicker,
+  :global(html.dark) .blog-overview-label,
+  :global(html.dark) .blog-archive-note-label,
+  :global(html.dark) .blog-entry-number,
+  :global(html.dark) .blog-entry-kind,
+  :global(html.dark) .blog-entry-tags-label {
+    color: rgba(171, 194, 212, 0.72);
+  }
+
+  :global(html.dark) .blog-archive-title,
+  :global(html.dark) .blog-overview-value,
+  :global(html.dark) .blog-overview-date,
+  :global(html.dark) .blog-entry-title {
+    color: #eef5fb;
+  }
+
+  :global(html.dark) .blog-archive-subtitle,
+  :global(html.dark) .blog-archive-note-text,
+  :global(html.dark) .blog-entry-description,
+  :global(html.dark) .blog-archive-empty {
+    color: rgba(206, 223, 236, 0.78);
+  }
+
+  :global(html.dark) .blog-entry-meta,
+  :global(html.dark) .blog-overview-value span {
+    color: rgba(167, 194, 216, 0.74);
+  }
+
+  :global(html.dark) .blog-entry-tag {
+    color: rgba(214, 227, 238, 0.78);
+  }
+
+  :global(html.dark) .blog-entry-link {
+    color: #eaf3fb;
+  }
+
+  :global(html.dark) .blog-entry-thumb {
+    border-color: rgba(96, 124, 151, 0.18);
+  }
+
+  @media (max-width: 980px) {
+    .blog-archive-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .blog-entry.has-thumb {
+      grid-template-columns: 72px minmax(0, 1fr);
+    }
+
+    .blog-entry-thumb {
+      margin-top: 1rem;
+      max-width: 220px;
+      aspect-ratio: 1.18;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .blog-archive-hero {
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .blog-archive-title {
+      max-width: none;
+      font-size: clamp(2.1rem, 11vw, 3rem);
+    }
+
+    .blog-archive-overview {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .blog-overview-card:first-child {
+      grid-column: 1 / -1;
+    }
+
+    .blog-overview-card {
+      min-height: 6.6rem;
+      padding: 0.9rem;
+    }
+
+    .blog-archive-subtitle,
+    .blog-archive-note-text,
+    .blog-entry-description {
+      font-size: 0.95rem;
+      line-height: 1.74;
+    }
+
+    .blog-entry,
+    .blog-entry.has-thumb {
+      grid-template-columns: 1fr;
+      gap: 0.8rem;
+      padding: 1rem;
+    }
+
+    .blog-entry-rail {
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .blog-entry-meta {
+      gap: 0.55rem 0.8rem;
+    }
+
+    .blog-entry-meta-item {
+      font-size: 0.72rem;
+    }
+
+    .blog-entry-title {
+      font-size: clamp(1.45rem, 7.6vw, 1.85rem);
+    }
+
+    .blog-entry-thumb {
+      border-radius: 0.85rem;
+      max-width: none;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .blog-archive-overview {
+      grid-template-columns: 1fr;
+    }
+
+    .blog-overview-card:first-child {
+      grid-column: auto;
+    }
+  }
+</style>

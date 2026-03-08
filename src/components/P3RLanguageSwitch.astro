@@ -1,0 +1,132 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+
+const normalizePath = (value: string) => value.replace(/\/+$/, '') || '/';
+const stripLocalePrefix = (pathname: string, locale: string) => {
+  const normalized = normalizePath(pathname);
+
+  if (normalized === '/') {
+    return '';
+  }
+
+  const stripped = normalized.replace(new RegExp(`^/${locale}(?=/|$)`), '');
+  return stripped === '/' ? '' : stripped.replace(/^\/+/, '');
+};
+
+const currentContentPath = stripLocalePrefix(Astro.url.pathname, lang);
+
+const labels = {
+  zh: { short: '中', long: '中文' },
+  en: { short: 'EN', long: 'English' },
+  ja: { short: '日', long: '日本語' },
+} as const;
+
+const switchLabelMap = {
+  zh: '切换语言',
+  en: 'Switch language',
+  ja: '言語を切り替える',
+} as const;
+
+const localeItems = (['zh', 'en', 'ja'] as const).map((code) => ({
+  code,
+  short: labels[code].short,
+  long: labels[code].long,
+  url: getRelativeLocaleUrl(code, currentContentPath),
+}));
+
+const switchLabel = switchLabelMap[lang as keyof typeof switchLabelMap] ?? switchLabelMap.zh;
+---
+
+<div class="p3r-language-switch" role="navigation" aria-label={switchLabel}>
+  {localeItems.map((item) => (
+    <a
+      href={item.url}
+      lang={item.code}
+      title={item.long}
+      aria-label={item.long}
+      aria-current={item.code === lang ? 'page' : undefined}
+      data-transition-link="locale"
+      data-url={item.url}
+      class:list={['p3r-language-switch__item', { 'is-active': item.code === lang }]}
+    >
+      <span>{item.short}</span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .p3r-language-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.24rem;
+    padding: 0.24rem;
+    border: 1px solid var(--p3r-ice-accent-border);
+    background: rgba(6, 35, 39, 0.32);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    clip-path: polygon(9px 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+  }
+
+  .p3r-language-switch__item {
+    min-width: 2.55rem;
+    padding: 0.34rem 0.56rem;
+    color: var(--p3r-ice-text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    transition: color 180ms ease, background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  }
+
+  .p3r-language-switch__item:hover {
+    color: var(--p3r-ice-white);
+    transform: translateY(-1px);
+  }
+
+  .p3r-language-switch__item.is-active {
+    background: var(--p3r-ice-highlight);
+    color: var(--p3r-ice-ink);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+    pointer-events: none;
+  }
+
+  @media (max-width: 720px) {
+    .p3r-language-switch {
+      gap: 0.2rem;
+      padding: 0.2rem;
+    }
+
+    .p3r-language-switch__item {
+      min-width: 2.2rem;
+      padding: 0.32rem 0.46rem;
+      font-size: 0.66rem;
+      letter-spacing: 0.1em;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .p3r-language-switch {
+      gap: 0.16rem;
+      padding: 0.16rem;
+    }
+
+    .p3r-language-switch__item {
+      min-width: 1.95rem;
+      padding: 0.28rem 0.38rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+    }
+  }
+</style>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-labelledby="title desc">
+  <title id="title">Template avatar placeholder</title>
+  <desc id="desc">Abstract placeholder portrait for the public template.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f4f7fb" />
+      <stop offset="55%" stop-color="#d8edf5" />
+      <stop offset="100%" stop-color="#97d8d8" />
+    </linearGradient>
+    <linearGradient id="panel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#153548" />
+      <stop offset="100%" stop-color="#0b8b92" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="640" rx="96" fill="url(#bg)" />
+  <path d="M0 468L262 118h146L173 640H0z" fill="#ffffff" fill-opacity="0.88" />
+  <circle cx="414" cy="228" r="94" fill="url(#panel)" fill-opacity="0.96" />
+  <path d="M248 532c24-92 92-142 172-142s148 50 172 142v108H248z" fill="url(#panel)" />
+  <path d="M447 170l20 20-62 62 44 44-20 20-64-64z" fill="#dffbfd" />
+  <path d="M494 390h64v20h-64zM494 430h42v20h-42z" fill="#dffbfd" fill-opacity="0.92" />
+  <text x="66" y="92" fill="#153548" font-family="IBM Plex Mono, monospace" font-size="28" letter-spacing="4">CURVED CHAOS</text>
+  <text x="66" y="128" fill="#286c80" font-family="IBM Plex Mono, monospace" font-size="20" letter-spacing="3">REPLACE WITH YOUR IMAGE</text>
+</svg>
