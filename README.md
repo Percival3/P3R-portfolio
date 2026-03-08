@@ -1,10 +1,13 @@
 # Curved Chaos
 
-一个基于 Astro v5、React 19、Tailwind CSS v4 的多语言个人主页模板，适合用来搭建作品集、博客、研究记录或带强视觉风格的个人站。
+一个受 P3R UI 气质启发的多语言个人主页模板，基于 Astro v5、React 19、Tailwind CSS v4 构建，适合用来搭建作品集、博客、研究记录或带强视觉风格的个人站。
+
+P3R-inspired multilingual personal website template for portfolios, blogs, research notes, and stylized personal landing pages.
 
 ## 这是什么
 
 - 一个可直接部署到 Netlify 的静态网站模板
+- 视觉方向受 P3R 风格启发，但不附带任何官方角色、剧情或受版权保护素材
 - 内置 `zh / en / ja` 三语言路由
 - 首页、内容页、关于页已经带完整视觉骨架
 - 内容系统已分成 `posts / research / creatives` 三个集合

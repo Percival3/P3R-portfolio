@@ -1,5 +1,16 @@
 {
   "name": "curved-chaos",
+  "description": "P3R-inspired multilingual personal website template built with Astro, React, and Tailwind CSS.",
+  "keywords": [
+    "astro",
+    "react",
+    "tailwindcss",
+    "personal-website",
+    "portfolio-template",
+    "blog-template",
+    "multilingual",
+    "p3r-inspired"
+  ],
   "type": "module",
   "version": "0.0.1",
   "scripts": {
